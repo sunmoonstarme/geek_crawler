@@ -155,7 +155,7 @@ class Cookie:
 
 class GeekCrawler:
     """ 极客时间相关操作的类 """
-    def __init__(self, cellphone=None, passwd=None, exclude=None):
+    def __init__(self, cellphone=None, passwd=None, exclude=None, include=None):
         self.cellphone = cellphone
         self.password = passwd
         self._check()
@@ -179,12 +179,15 @@ class GeekCrawler:
         }
         self.products = []
         self.exclude = exclude
+        self.include = include
 
     def _check(self):
         if not self.cellphone:
-            self.cellphone = str(input('请输入你要登录的手机号： '))
+            #self.cellphone = str(input('请输入你要登录的手机号： '))
+            self.cellphone = '13388612648'
         if not self.password:
-            self.password = str(input('请输入你极客账号的登录密码： '))
+            # self.password = str(input('请输入你极客账号的登录密码： '))
+            self.password = 'geektm2024'
 
     def _login(self):
         """ 登录接口方法 """
@@ -292,10 +295,16 @@ class GeekCrawler:
         keys = ['title', 'type', 'id']  # 定义要拿取的字段
         products = data.get('products', [])
         lists = data.get('list', [])
+        titles = []
         for product in products:
             # 如果课程标题在需要排除的列表中，则跳过该课程
             if product.get('title', '') in self.exclude:
                 continue
+
+            if product.get('title', '') not in self.include:
+                continue
+
+            titles.append(product.get('title', ''))
 
             new_product = {key: value for key, value in product.items() if key in keys}
             new_product['articles'] = []  # 定义文章列表（用来存储文章信息）
@@ -305,6 +314,8 @@ class GeekCrawler:
                     new_product['aid'] = pro['aid']
             if _type.lower() == 'all' or new_product['type'] == _type:
                 result.append(new_product)
+
+        log.info(f">>>>>>商品课程标题集：{titles}")
         return result
 
     def _article(self, aid, pro, file_type=None, get_comments=False):
@@ -492,7 +503,7 @@ def run(cellphone=None, passwd=None, exclude=None, file_type=None, get_comments=
     global FINISH_ARTICLES
     global ALL_ARTICLES
 
-    geek = GeekCrawler(cellphone, passwd, exclude=exclude)
+    geek = GeekCrawler(cellphone, passwd, exclude=exclude, include=include)
     geek._login()  # 请求登录接口进行登录
     geek._product()  # 请求获取课程接口
 
@@ -529,12 +540,15 @@ if __name__ == "__main__":
     # pwd = ""
 
     # 采用每次跑脚本手动输入账号密码的方式
-    cellphone = str(input("请输入你的极客时间账号（手机号）: "))
-    pwd = str(input("请输入你的极客时间密码: "))
+    #cellphone = str(input("请输入你的极客时间账号（手机号）: "))
+    cellphone = '13388612648'
+    #pwd = str(input("请输入你的极客时间密码: "))
+    pwd = 'geektm2024'
 
     # 需要排除的课程列表，根据自己的情况定义（比如已经有的资源就不用再继续下载了）
     # exclude = ['左耳听风', '趣谈网络协议']
     exclude = []
+    include = ['微服务架构核心20讲']
 
     # 需要保存文件的后缀名，尽量选 .md 或者 .html
     file_type = '.md'
